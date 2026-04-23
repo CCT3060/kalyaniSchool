@@ -1,0 +1,149 @@
+
+/* Wallet Summary Card Revamp */
+.wallet-summary {
+  display: block;
+  padding: 0;
+  overflow: hidden;
+  height: 100%;
+  min-height: 320px;
+}
+
+.summary-content {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  height: 100%;
+}
+
+.summary-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--border);
+}
+
+.summary-avatar {
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  background: var(--primary-soft);
+  color: var(--primary);
+  display: grid;
+  place-items: center;
+  font-size: 20px;
+  font-weight: 700;
+  border: 1px solid rgba(11, 95, 168, 0.1);
+}
+
+.summary-info {
+  flex: 1;
+}
+
+.summary-name {
+  font-size: 18px;
+  font-weight: 800;
+  color: #0f172a;
+  margin-bottom: 4px;
+}
+
+.summary-sub {
+  font-size: 13px;
+  color: #64748b;
+  font-family: 'Monaco', monospace;
+  font-weight: 500;
+}
+
+.summary-balance-card {
+  padding: 5px;
+  border-radius: 16px;
+  color: white;
+  box-shadow: 0 10px 20px -5px rgba(11, 95, 168, 0.3);
+  text-align: center;
+}
+
+.balance-label {
+  display: block;
+  font-size: 13px;
+  font-weight: 500;
+  opacity: 0.9;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.summary-balance {
+  font-size: 32px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+}
+
+.summary-details-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 16px;
+  margin-top: auto;
+}
+
+.detail-item {
+  background: #f8fafc;
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+}
+
+.detail-label {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  color: #64748b;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+
+.detail-value {
+  font-size: 14px;
+  font-weight: 700;
+  color: #0f172a;
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.detail-value.mono {
+  font-family: 'Monaco', monospace;
+  font-size: 13px;
+}
+
+.summary-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  padding: 40px;
+  text-align: center;
+  color: #94a3b8;
+}
+
+.placeholder-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+  opacity: 0.5;
+  filter: grayscale(1);
+}
+
+.summary-placeholder h3 {
+  font-size: 16px;
+  font-weight: 700;
+  color: #475569;
+  margin-bottom: 8px;
+}
+
+.summary-placeholder p {
+  font-size: 13px;
+  max-width: 240px;
+  line-height: 1.5;
+}

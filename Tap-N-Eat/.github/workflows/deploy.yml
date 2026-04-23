@@ -1,0 +1,34 @@
+name: Deploy to EC2
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ec2-user
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script_stop: true
+          command_timeout: 300s
+          script: |
+            set -e
+            cd /home/ec2-user/tapneat_src
+            git pull origin main
+            rsync -a --delete --exclude=node_modules --exclude=.env --exclude=uploads \
+              /home/ec2-user/tapneat_src/backend-node/ \
+              /home/ec2-user/tapneat/
+            cd /home/ec2-user/tapneat && npm install --omit=dev --silent
+            cd /home/ec2-user/tapneat_src && npm run build
+            sudo rsync -a --delete \
+              /home/ec2-user/tapneat_src/dist/ \
+              /var/www/tapneat/
+            pm2 restart tapneat-api --update-env
+            sleep 3
+            curl -sf http://localhost:5000/api/health

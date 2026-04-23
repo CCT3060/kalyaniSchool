@@ -1,0 +1,50 @@
+# Dependencies
+node_modules/
+**/node_modules/
+
+# Build output
+dist/
+build/
+**/dist/
+**/build/
+
+# Expo / React Native
+.expo/
+.expo-shared/
+*.jks
+*.keystore
+ios/Pods/
+android/.gradle/
+android/build/
+android/app/build/
+android/app/release/
+
+# Environment / secrets
+.env
+.env.*
+!.env.example
+**/.env
+**/.env.*
+!**/.env.example
+
+# Uploaded content (school logos, etc.) — generated at runtime, not source
+Tap-N-Eat/backend-node/uploads/
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+*.log
+logs/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+
+# Misc
+*.tmp
+*.temp
+.cache/

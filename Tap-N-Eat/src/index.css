@@ -1,0 +1,40 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+
+  --primary: #0b5fa8;
+  --primary-dark: #084a80;
+  --accent: #2c9b2c;
+  --accent-dark: #217521;
+  --secondary: #8b4c1f;
+  --secondary-dark: #6d3b18;
+  --primary-soft: #e7f1fb;
+  --accent-soft: #e9f8ee;
+  --secondary-soft: #f7efe8;
+  --danger-soft: #fee2e2;
+  --neutral: #475569;
+  --muted: #6b7280;
+  --surface: #ffffff;
+  --surface-soft: #f8fafc;
+  --border: #e5e7eb;
+  --shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  min-width: 320px;
+  min-height: 100vh;
+}
+
+#root {
+  width: 100%;
+  min-height: 100vh;
+}

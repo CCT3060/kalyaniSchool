@@ -1,0 +1,40 @@
+{
+  "expo": {
+    "name": "Tap-N-Eat",
+    "slug": "Tap-N-Eat",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "icon": "./assets/logo.webp",
+    "splash": {
+      "image": "./assets/logo.webp",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.tapneat.parent",
+      "buildNumber": "1"
+    },
+    "android": {
+      "package": "com.tapneat.parent",
+      "versionCode": 1,
+      "usesCleartextTraffic": true,
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/logo.webp",
+        "backgroundColor": "#ffffff"
+      },
+      "permissions": [
+        "android.permission.INTERNET",
+        "android.permission.ACCESS_NETWORK_STATE"
+      ]
+    },
+    "web": {},
+    "extra": {
+      "eas": {
+        "projectId": "73738572-f448-4b21-99d3-9e1f3b7eb486"
+      }
+    },
+    "owner": "moghekarparikshit"
+  }
+}

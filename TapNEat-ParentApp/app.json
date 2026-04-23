@@ -1,0 +1,41 @@
+{
+  "expo": {
+    "name": "Tap-N-Eat",
+    "slug": "tapneat-parent-app",
+    "version": "1.0.1",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "icon": "./assets/logo.png",
+    "splash": {
+      "image": "./assets/logo.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#f6e8d4"
+    },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.tapneat.parent",
+      "buildNumber": "1"
+    },
+    "android": {
+      "package": "com.tapneat.parent",
+      "versionCode": 5,
+      "usesCleartextTraffic": true,
+      "softwareKeyboardLayoutMode": "resize",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/logo.png",
+        "backgroundColor": "#f6e8d4"
+      },
+      "permissions": [
+        "android.permission.INTERNET",
+        "android.permission.ACCESS_NETWORK_STATE"
+      ]
+    },
+    "web": {},
+    "owner": "archit947",
+    "extra": {
+      "eas": {
+        "projectId": "b0571c37-0121-4ac5-8a8a-1cc7c9d400eb"
+      }
+    }
+  }
+}

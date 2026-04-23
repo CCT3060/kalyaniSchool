@@ -1,0 +1,27 @@
+.client-login-page {
+  background: radial-gradient(circle at 20% 20%, rgba(16, 130, 106, 0.08), transparent 35%),
+    radial-gradient(circle at 80% 0%, rgba(11, 95, 168, 0.08), transparent 30%),
+    #f0f7f4;
+}
+
+.client-badge {
+  display: inline-block;
+  padding: 4px 14px;
+  background: linear-gradient(135deg, #10826a, #0b5fa8);
+  color: #fff;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  margin-bottom: 0.75rem;
+}
+
+.client-login-btn {
+  background: linear-gradient(135deg, #10826a, #0b8a72);
+  box-shadow: 0 4px 6px -1px rgba(16, 130, 106, 0.25);
+}
+
+.client-login-btn:hover {
+  background: linear-gradient(135deg, #0b6b57, #0b7a64);
+}

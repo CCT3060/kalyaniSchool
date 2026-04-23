@@ -1,0 +1,14 @@
+node_modules/
+**/node_modules/
+my-catalyst-app/
+.env
+.env.*
+*.log
+.DS_Store
+
+# Runtime-generated school logos — not source
+backend-node/uploads/
+
+# Expo / React Native build artifacts (for bundled parent app)
+**/.expo/
+**/.expo-shared/
