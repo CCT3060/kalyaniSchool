@@ -40,6 +40,17 @@ export default function WalletTab({ parentEmail }) {
     setTimeout(() => setAlertMsg({ type: '', text: '' }), 4000);
   };
 
+  // Format a MySQL DATE/DATETIME value (may come as ISO string or Date object)
+  const formatDate = (d) => {
+    if (!d) return '—';
+    const str = String(d);
+    const datePart = str.includes('T') ? str.split('T')[0] : str.split(' ')[0];
+    const parts = datePart.split('-');
+    if (parts.length !== 3) return str;
+    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    return `${parts[2]} ${months[parseInt(parts[1], 10) - 1]} ${parts[0]}`;
+  };
+
   const selectedChild = children.find((c) => c.id === selectedChildId) || null;
 
   const loadProfile = useCallback(async () => {
@@ -365,8 +376,10 @@ export default function WalletTab({ parentEmail }) {
                 {visibleTx.map((item) => (
                   <View key={item.id} style={styles.tableRow}>
                     <Text style={[styles.td, { flex: 2 }]} numberOfLines={2}>
-                      {item.transaction_date}{'\n'}
-                      <Text style={{ color: COLORS.textLight, fontSize: 10 }}>{item.transaction_time}</Text>
+                      {formatDate(item.transaction_date)}{'\n'}
+                      <Text style={{ color: COLORS.textLight, fontSize: 10 }}>
+                        {item.transaction_time ? String(item.transaction_time).slice(0, 5) : ''}
+                      </Text>
                     </Text>
                     <View style={{ flex: 1, justifyContent: 'center' }}>
                       <View style={[

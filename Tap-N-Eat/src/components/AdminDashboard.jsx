@@ -1357,15 +1357,12 @@ function AdminDashboard({
   const loadScanHistory = async () => {
     try {
       const schoolId = localStorage.getItem('adminSchoolId');
-      let url = `${API_BASE_URL}/transactions?limit=20`;
+      let url = `${API_BASE_URL}/transactions?limit=100&transaction_type=canteen,canteen_denied`;
       if (schoolId) url += `&school_id=${schoolId}`;
       const response = await apiFetch(url);
       const data = await response.json();
       if (response.ok) {
-        const canteenRecords = (data.transactions || []).filter(
-          (t) => t.transaction_type === 'canteen' || t.transaction_type === 'canteen_denied'
-        );
-        setScanHistory(canteenRecords);
+        setScanHistory(data.transactions || []);
       }
     } catch (e) { /* silent */ }
   };

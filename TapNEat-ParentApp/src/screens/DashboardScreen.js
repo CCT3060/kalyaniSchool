@@ -77,7 +77,7 @@ export default function DashboardScreen({ navigation }) {
               )}
             </View>
             <View>
-              <Text style={styles.headerTitle} numberOfLines={1}>
+              <Text style={styles.headerTitle} numberOfLines={2}>
                 {schoolName || 'Tap-N-Eat'}
               </Text>
               <Text style={styles.headerSub}>Parent Portal</Text>
@@ -116,9 +116,9 @@ export default function DashboardScreen({ navigation }) {
             backgroundColor: '#fff',
             borderTopColor: '#e2e8f0',
             borderTopWidth: 1,
-            paddingBottom: 8,
+            paddingBottom: 12,
             paddingTop: 6,
-            height: 64,
+            height: 70,
             shadowColor: '#000',
             shadowOffset: { width: 0, height: -2 },
             shadowOpacity: 0.06,
@@ -197,6 +197,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
+    flex: 1,
+    flexShrink: 1,
+    marginRight: 8,
   },
   logoCircle: {
     width: 38,
@@ -213,9 +216,11 @@ const styles = StyleSheet.create({
   logoImage: { width: 28, height: 28, borderRadius: 6 },
   headerTitle: {
     color: '#fff',
-    fontSize: 17,
+    fontSize: 15,
     fontWeight: '800',
     letterSpacing: 0.2,
+    flexShrink: 1,
+    flexWrap: 'wrap',
   },
   headerSub: {
     color: COLORS.primary,

@@ -40,22 +40,6 @@ export default function SubscriptionsTab({ parentEmail }) {
 
   const selectedChild = children.find((c) => c.id === selectedChildId) || null;
 
-  const loadChildren = useCallback(async () => {
-    if (!parentEmail) return;
-    const { ok, data } = await api(
-      `parent-portal?action=profile&email=${encodeURIComponent(parentEmail)}`
-    );
-    if (ok && data.children) {
-      setChildren(data.children || []);
-      setLoadError('');
-      if (data.children.length > 0 && !selectedChildId) {
-        setSelectedChildId(data.children[0].id);
-      }
-    } else if (!ok) {
-      setLoadError(data.error || 'Could not connect to server. Please check your connection.');
-    }
-  }, [parentEmail, selectedChildId]);
-
   const loadSubscriptions = useCallback(async (childId) => {
     if (!childId || !parentEmail) return;
     const { ok, data } = await api(
@@ -73,37 +57,47 @@ export default function SubscriptionsTab({ parentEmail }) {
     if (ok) setCanteenLog(data.canteen_log || []);
   }, [parentEmail]);
 
-  const loadAvailablePlans = useCallback(async () => {
-    const now = new Date();
-    const curYear = now.getFullYear();
-    // Load all 12 months of current year + all 12 months of next year
-    const monthsToFetch = [];
-    for (let m = 1; m <= 12; m++) {
-      monthsToFetch.push({ year: curYear, month: m });
-      monthsToFetch.push({ year: curYear + 1, month: m });
+  const loadAvailablePlans = useCallback(async (schoolId, grade) => {
+    const curYear = new Date().getFullYear();
+    let url = `monthly-meal-plans?year=${curYear}&year_end=${curYear + 1}`;
+    if (schoolId) url += `&school_id=${schoolId}`;
+    if (grade)    url += `&grade=${encodeURIComponent(grade)}`;
+    const { ok, data } = await api(url);
+    if (ok && Array.isArray(data?.plans)) {
+      const seen = new Set();
+      setAvailablePlans(
+        data.plans.filter((p) => { if (seen.has(p.id)) return false; seen.add(p.id); return true; })
+      );
+    } else {
+      setAvailablePlans([]);
     }
-    const results = await Promise.all(
-      monthsToFetch.map((m) => api(`monthly-meal-plans?year=${m.year}&month=${m.month}`))
-    );
-    const combined = results.flatMap((r) =>
-      r.ok && Array.isArray(r.data?.plans) ? r.data.plans : []
-    );
-    const seen = new Set();
-    setAvailablePlans(
-      combined.filter((p) => { if (seen.has(p.id)) return false; seen.add(p.id); return true; })
-    );
   }, []);
 
   const loadAll = useCallback(async (childId) => {
     setLoading(true);
-    await loadChildren();
-    const cid = childId || selectedChildId;
+    let loadedChildren = children;
+    if (!parentEmail) { setLoading(false); return; }
+    const { ok, data } = await api(
+      `parent-portal?action=profile&email=${encodeURIComponent(parentEmail)}`
+    );
+    if (ok && data.children) {
+      loadedChildren = data.children || [];
+      setChildren(loadedChildren);
+      setLoadError('');
+      if (loadedChildren.length > 0 && !selectedChildId) {
+        setSelectedChildId(loadedChildren[0].id);
+      }
+    } else if (!ok) {
+      setLoadError(data.error || 'Could not connect to server. Please check your connection.');
+    }
+    const cid = childId || selectedChildId || (loadedChildren[0]?.id);
     if (cid) {
       await loadSubscriptions(cid);
     }
-    await loadAvailablePlans();
+    const child = loadedChildren.find((c) => c.id === cid) || loadedChildren[0];
+    await loadAvailablePlans(child?.school_id, child?.grade);
     setLoading(false);
-  }, [loadChildren, loadSubscriptions, loadAvailablePlans, selectedChildId]);
+  }, [parentEmail, children, selectedChildId, loadSubscriptions, loadAvailablePlans]);
 
   useEffect(() => {
     api('razorpay-config').then(({ ok, data }) => { if (ok && data.key_id) setRzpKey(data.key_id); });
@@ -116,13 +110,14 @@ export default function SubscriptionsTab({ parentEmail }) {
   useEffect(() => {
     if (selectedChildId) {
       loadSubscriptions(selectedChildId);
+      const child = children.find((c) => c.id === selectedChildId);
+      loadAvailablePlans(child?.school_id, child?.grade);
     }
   }, [selectedChildId]);
 
   const onRefresh = async () => {
     setRefreshing(true);
     await loadAll(selectedChildId);
-    await loadAvailablePlans();
     setRefreshing(false);
   };
 

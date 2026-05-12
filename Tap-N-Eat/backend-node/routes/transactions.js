@@ -53,6 +53,7 @@ router.get('/', async (req, res) => {
     const mealCategory = req.query.meal_category  || null;
     const limit        = parseInt(req.query.limit || 100);
     const filterSchool = req.query.school_id && !isNaN(req.query.school_id) ? parseInt(req.query.school_id) : null;
+    const txType       = req.query.transaction_type || null; // e.g. 'canteen' or 'canteen,canteen_denied'
 
     let queryEmp = `SELECT 'employee' AS source, t.id, t.employee_id, t.emp_name, t.emp_id, t.rfid_number,
                     t.transaction_type, t.order_status, t.meal_category, t.amount,
@@ -72,6 +73,16 @@ router.get('/', async (req, res) => {
     if (employeeId)   { queryEmp += ' AND t.employee_id=?'; empVals.push(employeeId); queryVis += ' AND 1=0'; }
     if (date)         { queryEmp += ' AND t.transaction_date=?'; empVals.push(date); queryVis += ' AND DATE(vo.created_at)=?'; visVals.push(date); }
     if (mealCategory) { queryEmp += ' AND t.meal_category=?'; empVals.push(mealCategory); queryVis += ' AND vo.meal_slot=?'; visVals.push(mealCategory); }
+    if (txType) {
+      const types = txType.split(',').map(t => t.trim()).filter(Boolean);
+      if (types.length === 1) {
+        queryEmp += ' AND t.transaction_type=?'; empVals.push(types[0]);
+      } else if (types.length > 1) {
+        queryEmp += ` AND t.transaction_type IN (${types.map(() => '?').join(',')})`;
+        empVals.push(...types);
+      }
+      queryVis += ' AND 1=0'; // visitor orders don't have these types
+    }
 
     const finalQuery = `SELECT * FROM ((${queryEmp}) UNION ALL (${queryVis})) AS all_tx
       ORDER BY transaction_date DESC, transaction_time DESC, created_at DESC LIMIT ?`;

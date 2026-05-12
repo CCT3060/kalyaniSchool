@@ -65,6 +65,14 @@ export default function ClientDashboard() {
   const [permMap, setPermMap]             = useState({});
   const OPS = ['view','create','edit','delete','import','export'];
 
+  // Roles state
+  const [rolesSchoolId, setRolesSchoolId] = useState('');
+  const [roles, setRoles]               = useState([]);
+  const [rolesLoading, setRolesLoading] = useState(false);
+  const [roleForm, setRoleForm]         = useState({ role_name: '', description: '' });
+  const [editRole, setEditRole]         = useState(null);
+  const [showRoleForm, setShowRoleForm] = useState(false);
+
   const showAlert = (message, type = 'success') => {
     setAlert({ show: true, message, type });
     setTimeout(() => setAlert({ show: false, message: '', type: '' }), 5000);
@@ -371,6 +379,47 @@ export default function ClientDashboard() {
     return 'role-badge role-security';
   };
 
+  // ── Roles ──────────────────────────────────────────────
+  const loadRoles = async (schoolId) => {
+    if (!schoolId) return;
+    setRolesLoading(true);
+    const { ok, data } = await api(`school-roles?school_id=${schoolId}`);
+    if (ok) setRoles(data.roles || []);
+    else showAlert(data.error || 'Failed to load roles', 'error');
+    setRolesLoading(false);
+  };
+
+  const handleRoleSubmit = async (e) => {
+    e.preventDefault();
+    if (!roleForm.role_name.trim()) { showAlert('Role name is required', 'error'); return; }
+    const isEdit = !!editRole;
+    const { ok, data } = isEdit
+      ? await api('school-roles', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: editRole.id, ...roleForm }) })
+      : await api('school-roles', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ school_id: parseInt(rolesSchoolId), ...roleForm }) });
+    if (ok) {
+      showAlert(data.message || (isEdit ? 'Role updated' : 'Role created'), 'success');
+      setShowRoleForm(false);
+      setEditRole(null);
+      setRoleForm({ role_name: '', description: '' });
+      loadRoles(rolesSchoolId);
+    } else {
+      showAlert(data.error || 'Failed to save role', 'error');
+    }
+  };
+
+  const deleteRole = async (id) => {
+    if (!window.confirm('Delete this role? This cannot be undone.')) return;
+    const { ok, data } = await api(`school-roles?id=${id}`, { method: 'DELETE' });
+    if (ok) { showAlert('Role deleted', 'success'); loadRoles(rolesSchoolId); }
+    else showAlert(data.error || 'Failed to delete', 'error');
+  };
+
+  const startEditRole = (role) => {
+    setEditRole(role);
+    setRoleForm({ role_name: role.role_name, description: role.description || '' });
+    setShowRoleForm(true);
+  };
+
   return (
     <div className="client-dashboard">
       {/* Sidebar */}
@@ -415,6 +464,19 @@ export default function ClientDashboard() {
               <circle cx="12" cy="16" r="1.5" fill="currentColor"/>
             </svg>
             <span>Permissions</span>
+          </button>
+
+          <button
+            className={`client-nav-item ${section === 'roles' ? 'active' : ''}`}
+            onClick={() => { setSection('roles'); if (schools.length > 0 && !rolesSchoolId) { const sid = String(schools[0].id); setRolesSchoolId(sid); loadRoles(sid); } }}
+          >
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              <circle cx="9" cy="7" r="4" stroke="currentColor" strokeWidth="2"/>
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+              <path d="M16 3.13a4 4 0 0 1 0 7.75" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+            </svg>
+            <span>Roles</span>
           </button>
         </nav>
 
@@ -820,6 +882,115 @@ export default function ClientDashboard() {
                   </button>
                 </div>
               </>
+            )}
+          </div>
+        )}
+
+        {/* ── ROLES section ────────────────────────── */}
+        {section === 'roles' && (
+          <div className="client-section">
+            <div className="client-section-header">
+              <div>
+                <h1>Manage Roles</h1>
+                <p>Create and manage custom roles for each school's admin users</p>
+              </div>
+              {rolesSchoolId && (
+                <button className="client-btn-primary" onClick={() => { setShowRoleForm(true); setEditRole(null); setRoleForm({ role_name: '', description: '' }); }}>
+                  + Add Role
+                </button>
+              )}
+            </div>
+
+            {/* School selector */}
+            <div className="client-form" style={{ maxWidth: 400, marginBottom: 24 }}>
+              <div className="client-form-group">
+                <label>School</label>
+                <select
+                  value={rolesSchoolId}
+                  onChange={(e) => { setRolesSchoolId(e.target.value); loadRoles(e.target.value); }}
+                >
+                  <option value="">— Select school —</option>
+                  {schools.map((s) => <option key={s.id} value={s.id}>{s.school_name}</option>)}
+                </select>
+              </div>
+            </div>
+
+            {/* Role form modal */}
+            {showRoleForm && (
+              <div className="client-modal-overlay" onClick={(e) => e.target === e.currentTarget && setShowRoleForm(false)}>
+                <div className="client-modal">
+                  <div className="client-modal-header">
+                    <h2>{editRole ? 'Edit Role' : 'Add New Role'}</h2>
+                    <button className="client-modal-close" onClick={() => setShowRoleForm(false)}>✕</button>
+                  </div>
+                  <form onSubmit={handleRoleSubmit} className="client-form">
+                    <div className="client-form-group">
+                      <label>Role Name *</label>
+                      <input
+                        value={roleForm.role_name}
+                        onChange={(e) => setRoleForm(p => ({ ...p, role_name: e.target.value }))}
+                        placeholder="e.g. Canteen Manager, Cashier, Teacher"
+                        required
+                      />
+                    </div>
+                    <div className="client-form-group">
+                      <label>Description</label>
+                      <textarea
+                        value={roleForm.description}
+                        onChange={(e) => setRoleForm(p => ({ ...p, description: e.target.value }))}
+                        placeholder="Brief description of this role's responsibilities"
+                        rows={2}
+                      />
+                    </div>
+                    <div className="client-form-actions">
+                      <button type="button" className="client-btn-ghost" onClick={() => setShowRoleForm(false)}>Cancel</button>
+                      <button type="submit" className="client-btn-primary">{editRole ? 'Save Changes' : 'Create Role'}</button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            )}
+
+            {!rolesSchoolId ? (
+              <div className="client-empty">
+                <div className="client-empty-icon">🏷️</div>
+                <p>Select a school above to manage its roles.</p>
+              </div>
+            ) : rolesLoading ? (
+              <div className="client-loader">Loading roles…</div>
+            ) : roles.length === 0 ? (
+              <div className="client-empty">
+                <div className="client-empty-icon">🏷️</div>
+                <p>No roles defined yet. Click <strong>+ Add Role</strong> to create one.</p>
+              </div>
+            ) : (
+              <div className="client-table-wrap">
+                <table className="client-table">
+                  <thead>
+                    <tr>
+                      <th>#</th>
+                      <th>Role Name</th>
+                      <th>Description</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {roles.map((r, i) => (
+                      <tr key={r.id}>
+                        <td>{i + 1}</td>
+                        <td><strong>{r.role_name}</strong></td>
+                        <td style={{ color: '#64748b', fontSize: 13 }}>{r.description || '—'}</td>
+                        <td>
+                          <div className="action-btns">
+                            <button className="action-btn" onClick={() => startEditRole(r)}>✏️ Edit</button>
+                            <button className="action-btn action-btn-danger" onClick={() => deleteRole(r.id)}>🗑️ Delete</button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             )}
           </div>
         )}

@@ -82,9 +82,9 @@ router.get('/', async (req, res) => {
 
     if (type === 'deductions') {
       let q = `SELECT t.id, t.emp_name AS student_name, t.emp_id AS student_id_no, t.rfid_number,
-                      t.meal_category, t.amount, t.previous_balance, t.new_balance,
+                      t.transaction_type, t.meal_category, t.amount, t.previous_balance, t.new_balance,
                       t.transaction_date, t.transaction_time, t.order_status
-               FROM transactions t WHERE t.transaction_type='deduction'`;
+               FROM transactions t WHERE t.transaction_type IN ('deduction','canteen','canteen_denied','tuckshop')`;
       const params = [];
       if (schoolId) { q += ' AND t.school_id=?'; params.push(schoolId); }
       if (from)     { q += ' AND t.transaction_date>=?'; params.push(from); }
