@@ -9,11 +9,11 @@ export default defineConfig({
     proxy: {
       // Proxies /api/* and /uploads/* to EC2 in dev so VITE_API_BASE_URL=/api works locally
       '/api': {
-        target: 'http://13.60.223.109',
+        target: 'http://13.51.167.146',
         changeOrigin: true,
       },
       '/uploads': {
-        target: 'http://13.60.223.109',
+        target: 'http://13.51.167.146',
         changeOrigin: true,
       },
     },
