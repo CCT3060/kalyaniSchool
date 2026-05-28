@@ -101,7 +101,7 @@ router.post('/', async (req, res) => {
     }
 
     if (action === 'login') {
-      const { email, password, school_id } = req.body;
+      const { email, password, school_id, school_code } = req.body;
       if (!email || !password) return res.status(400).json({ error: 'email and password are required' });
 
       const [rows] = await conn.query(
@@ -112,14 +112,24 @@ router.post('/', async (req, res) => {
       if (!parent || parseInt(parent.is_active) !== 1) return res.status(401).json({ error: 'Invalid email or password' });
       if (!parent.password_hash || !(await bcrypt.compare(password, parent.password_hash))) return res.status(401).json({ error: 'Invalid email or password' });
 
-      if (school_id && !isNaN(parseInt(school_id))) {
+      // Resolve school_code -> school_id if needed
+      let resolvedSchoolId = !isNaN(parseInt(school_id)) ? parseInt(school_id) : null;
+      if (!resolvedSchoolId && school_code) {
+        const [schoolRows] = await conn.query(
+          'SELECT id FROM schools WHERE UPPER(TRIM(school_code)) = UPPER(TRIM(?)) AND is_active = 1 LIMIT 1',
+          [String(school_code).trim()]
+        );
+        if (schoolRows.length > 0) resolvedSchoolId = schoolRows[0].id;
+      }
+
+      if (resolvedSchoolId) {
         await ensureEmployeesTable(conn);
         await ensureStudentColumns(conn);
         const [links] = await conn.query(
           `SELECT id FROM employees
            WHERE LOWER(TRIM(parent_email)) = LOWER(TRIM(?)) AND school_id = ?
            LIMIT 1`,
-          [email.trim().toLowerCase(), parseInt(school_id)]
+          [email.trim().toLowerCase(), resolvedSchoolId]
         );
         if (links.length === 0) {
           return res.status(403).json({ error: 'Parent not linked to this school' });

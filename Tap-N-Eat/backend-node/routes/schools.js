@@ -56,6 +56,18 @@ router.get('/', async (req, res) => {
       return res.json({ admins });
     }
 
+    // Lookup school by code (used by parent app)
+    if (req.query.action === 'lookup_code') {
+      const code = (req.query.code || '').trim().toUpperCase();
+      if (!code) return res.status(400).json({ error: 'code is required' });
+      const [rows] = await conn.query(
+        "SELECT id, school_name AS name, school_code, logo_url, is_active FROM schools WHERE UPPER(TRIM(school_code))=? AND is_active=1 LIMIT 1",
+        [code]
+      );
+      if (rows.length === 0) return res.status(404).json({ error: 'School not found. Please check the code and try again.' });
+      return res.json({ school: rows[0] });
+    }
+
     // schools
     if (req.query.id) {
       const [rows] = await conn.query("SELECT * FROM schools WHERE id=?", [req.query.id]);
