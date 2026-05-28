@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "Tap-N-Eat",
-    "slug": "tapneat-parent-app",
+    "slug": "tap-n-eat",
     "version": "1.0.1",
     "orientation": "portrait",
     "userInterfaceStyle": "light",
@@ -31,7 +31,7 @@
       ]
     },
     "web": {},
-    "owner": "archit947",
+    "owner": "architkore",
     "extra": {
       "eas": {
         "projectId": "b0571c37-0121-4ac5-8a8a-1cc7c9d400eb"

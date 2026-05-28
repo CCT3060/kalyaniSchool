@@ -2,6 +2,45 @@ const express = require('express');
 const router  = express.Router();
 const pool    = require('../config/database');
 const bcrypt  = require('bcryptjs');
+const crypto  = require('crypto');
+
+async function ensureStudentColumns(conn) {
+  const cols = {
+    parent_email: "ALTER TABLE employees ADD COLUMN parent_email VARCHAR(191) NULL AFTER emp_name",
+    grade:        "ALTER TABLE employees ADD COLUMN grade VARCHAR(30) NULL AFTER shift",
+    division:     "ALTER TABLE employees ADD COLUMN division VARCHAR(30) NULL AFTER grade",
+  };
+  for (const [col, sql] of Object.entries(cols)) {
+    const [rows] = await conn.query('SHOW COLUMNS FROM employees LIKE ?', [col]);
+    if (rows.length === 0) await conn.query(sql);
+  }
+}
+
+async function ensureEmployeesTable(conn) {
+  await conn.query(`CREATE TABLE IF NOT EXISTS employees (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    school_id INT NULL,
+    rfid_number VARCHAR(64) NULL UNIQUE,
+    emp_id VARCHAR(64) NULL UNIQUE,
+    emp_name VARCHAR(120) NOT NULL,
+    parent_email VARCHAR(191) NULL,
+    site_name VARCHAR(100) NULL,
+    shift VARCHAR(50) NULL,
+    grade VARCHAR(30) NULL,
+    division VARCHAR(30) NULL,
+    wallet_amount DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_emp_school (school_id)
+  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci`);
+}
+
+async function ensureRfidNullable(conn) {
+  const [rows] = await conn.query("SHOW COLUMNS FROM employees LIKE 'rfid_number'");
+  if (rows.length > 0 && rows[0].Null === 'NO') {
+    await conn.query("ALTER TABLE employees MODIFY COLUMN rfid_number VARCHAR(64) NULL");
+  }
+}
 
 async function parentResponse(conn, parent) {
   const [children] = await conn.query(
@@ -25,7 +64,7 @@ async function parentResponse(conn, parent) {
 
 // POST /api/parent-portal?action=login|signup
 router.post('/', async (req, res) => {
-  const action = req.query.action || '';
+  const action = req.query.action || req.body.action || '';
   const conn = await pool.getConnection();
   try {
     if (action === 'signup') {
@@ -76,6 +115,62 @@ router.post('/', async (req, res) => {
       return res.json({ message: 'Login successful', data: await parentResponse(conn, parent) });
     }
 
+    if (action === 'register-child') {
+      const { email, student_name, student_id, grade, division, school_id } = req.body || {};
+      if (!email || !student_name || !grade || !division) {
+        return res.status(400).json({ error: 'email, student_name, grade and division are required' });
+      }
+
+      await ensureEmployeesTable(conn);
+      await ensureStudentColumns(conn);
+      await ensureRfidNullable(conn);
+
+      const normEmail = String(email).trim().toLowerCase();
+      const [parentRows] = await conn.query(
+        'SELECT id, full_name, email, phone, is_active FROM parents WHERE email=? LIMIT 1',
+        [normEmail]
+      );
+      const parent = parentRows[0];
+      if (!parent || parseInt(parent.is_active) !== 1) {
+        return res.status(404).json({ error: 'Parent account not found' });
+      }
+
+      const safeStudentId = String(student_id || '').trim()
+        || `STU${crypto.randomBytes(3).toString('hex').toUpperCase()}`;
+      const safeName = String(student_name).trim();
+      const safeGrade = String(grade).trim();
+      const safeDivision = String(division).trim();
+      const schoolId = !isNaN(parseInt(school_id)) ? parseInt(school_id) : null;
+
+      const [result] = await conn.query(
+        `INSERT INTO employees (school_id, rfid_number, emp_id, emp_name, parent_email, site_name, shift, grade, division, wallet_amount)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          schoolId,
+          null,
+          safeStudentId,
+          safeName,
+          normEmail,
+          safeDivision,
+          safeGrade,
+          safeGrade,
+          safeDivision,
+          0,
+        ]
+      );
+
+      return res.json({
+        message: 'Child registered successfully',
+        child: {
+          id: result.insertId,
+          student_id: safeStudentId,
+          student_name: safeName,
+          grade: safeGrade,
+          division: safeDivision,
+        },
+      });
+    }
+
     if (action === 'recharge') {
       const { email, student_id, amount } = req.body;
       const amt = parseFloat(amount);
@@ -121,6 +216,14 @@ router.post('/', async (req, res) => {
     res.status(405).json({ error: 'Method not allowed' });
   } catch (err) {
     await conn.rollback().catch(() => {});
+    if (err.code === 'ER_DUP_ENTRY') {
+      const msg = err.message.includes('emp_id')
+        ? 'Student ID already exists'
+        : err.message.includes('rfid_number')
+        ? 'RFID already exists'
+        : 'Duplicate entry';
+      return res.status(400).json({ error: msg });
+    }
     res.status(400).json({ error: err.message });
   } finally {
     conn.release();

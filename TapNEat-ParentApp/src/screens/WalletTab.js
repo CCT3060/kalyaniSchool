@@ -9,6 +9,7 @@ import {
   ActivityIndicator,
   RefreshControl,
   Alert,
+  Modal,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { api } from '../utils/api';
@@ -35,9 +36,64 @@ export default function WalletTab({ parentEmail }) {
   const [razorpayOptions, setRazorpayOptions] = useState(null);
   const [pendingVerifyPayload, setPendingVerifyPayload] = useState(null);
 
+  // Register child modal state
+  const [registerVisible, setRegisterVisible] = useState(false);
+  const [regName, setRegName] = useState('');
+  const [regStudentId, setRegStudentId] = useState('');
+  const [regGrade, setRegGrade] = useState('');
+  const [regDivision, setRegDivision] = useState('');
+  const [regError, setRegError] = useState('');
+  const [regLoading, setRegLoading] = useState(false);
+
   const showAlert = (text, type = 'success') => {
     setAlertMsg({ type, text });
     setTimeout(() => setAlertMsg({ type: '', text: '' }), 4000);
+  };
+
+  const resetRegisterForm = () => {
+    setRegName('');
+    setRegStudentId('');
+    setRegGrade('');
+    setRegDivision('');
+    setRegError('');
+  };
+
+  const handleRegisterChild = async () => {
+    if (!regName.trim() || !regStudentId.trim() || !regGrade.trim() || !regDivision.trim()) {
+      setRegError('Please fill all required fields.');
+      return;
+    }
+    if (!parentEmail) {
+      setRegError('Parent email missing. Please sign in again.');
+      return;
+    }
+
+    setRegLoading(true);
+    setRegError('');
+    const { ok, data } = await api('parent-portal?action=register-child', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'register-child',
+        email: parentEmail,
+        student_name: regName.trim(),
+        student_id: regStudentId.trim(),
+        grade: regGrade.trim(),
+        division: regDivision.trim(),
+      }),
+    });
+
+    if (!ok) {
+      setRegError(data.error || 'Failed to register child');
+      setRegLoading(false);
+      return;
+    }
+
+    setRegLoading(false);
+    setRegisterVisible(false);
+    resetRegisterForm();
+    showAlert('Child registered successfully. RFID will be assigned by the school.', 'success');
+    await loadProfile();
   };
 
   // Format a MySQL DATE/DATETIME value (may come as ISO string or Date object)
@@ -246,6 +302,16 @@ export default function WalletTab({ parentEmail }) {
         )}
       </View>
 
+        <View style={styles.actionRow}>
+          <TouchableOpacity
+            style={styles.registerBtn}
+            onPress={() => { setRegisterVisible(true); setRegError(''); }}
+            activeOpacity={0.85}
+          >
+            <Text style={styles.registerBtnText}>Register Child</Text>
+          </TouchableOpacity>
+        </View>
+
       {children.length === 0 ? (
         <View style={styles.emptyBox}>
           <Text style={styles.emptyText}>No children are linked to this parent email yet.</Text>
@@ -434,6 +500,90 @@ export default function WalletTab({ parentEmail }) {
       )}
     </ScrollView>
 
+    <Modal
+      visible={registerVisible}
+      transparent
+      animationType="slide"
+      onRequestClose={() => setRegisterVisible(false)}
+    >
+      <View style={styles.modalBackdrop}>
+        <View style={styles.modalCard}>
+          <View style={styles.modalHeader}>
+            <Text style={styles.modalTitle}>Register Child</Text>
+            <TouchableOpacity
+              onPress={() => setRegisterVisible(false)}
+              style={styles.modalClose}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.modalCloseText}>×</Text>
+            </TouchableOpacity>
+          </View>
+          <Text style={styles.modalSub}>
+            Enter your child's school details. RFID will be assigned by the school admin.
+          </Text>
+
+          <Text style={styles.modalLabel}>Student Full Name *</Text>
+          <TextInput
+            style={styles.modalInput}
+            value={regName}
+            onChangeText={setRegName}
+            placeholder="Child name"
+            placeholderTextColor={COLORS.textMuted}
+          />
+
+          <Text style={styles.modalLabel}>Student ID *</Text>
+          <TextInput
+            style={styles.modalInput}
+            value={regStudentId}
+            onChangeText={setRegStudentId}
+            placeholder="Admission / Student ID"
+            placeholderTextColor={COLORS.textMuted}
+          />
+
+          <View style={styles.modalRow}>
+            <View style={styles.modalHalf}>
+              <Text style={styles.modalLabel}>Grade *</Text>
+              <TextInput
+                style={styles.modalInput}
+                value={regGrade}
+                onChangeText={setRegGrade}
+                placeholder="e.g. 5"
+                placeholderTextColor={COLORS.textMuted}
+              />
+            </View>
+            <View style={styles.modalHalf}>
+              <Text style={styles.modalLabel}>Division *</Text>
+              <TextInput
+                style={styles.modalInput}
+                value={regDivision}
+                onChangeText={setRegDivision}
+                placeholder="e.g. A"
+                placeholderTextColor={COLORS.textMuted}
+              />
+            </View>
+          </View>
+
+          {!!regError && (
+            <View style={styles.modalErrorBox}>
+              <Text style={styles.modalErrorText}>{regError}</Text>
+            </View>
+          )}
+
+          <TouchableOpacity
+            style={[styles.modalPrimaryBtn, regLoading && styles.modalPrimaryBtnDisabled]}
+            onPress={handleRegisterChild}
+            disabled={regLoading}
+            activeOpacity={0.85}
+          >
+            {regLoading
+              ? <ActivityIndicator size="small" color="#fff" />
+              : <Text style={styles.modalPrimaryBtnText}>Register Child</Text>
+            }
+          </TouchableOpacity>
+        </View>
+      </View>
+    </Modal>
+
     {razorpayOptions && (
       <RazorpayWebView
         visible={razorpayVisible}
@@ -504,6 +654,18 @@ const styles = StyleSheet.create({
   },
   summaryLabel: { fontSize: 13, color: COLORS.textMuted },
   summaryValue: { fontSize: 22, fontWeight: '800', color: COLORS.primary },
+
+  actionRow: {
+    alignItems: 'flex-end',
+    marginBottom: 10,
+  },
+  registerBtn: {
+    backgroundColor: COLORS.primary,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 10,
+  },
+  registerBtnText: { color: '#fff', fontWeight: '700', fontSize: 13 },
 
   card: {
     backgroundColor: '#fff',
@@ -619,6 +781,64 @@ const styles = StyleSheet.create({
     borderWidth: 1, borderColor: COLORS.border,
   },
   loadMoreText: { fontSize: 13, fontWeight: '700', color: COLORS.primary },
+
+  modalBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(15, 23, 42, 0.55)',
+    justifyContent: 'center',
+    padding: 20,
+  },
+  modalCard: {
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    padding: 18,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 6,
+  },
+  modalTitle: { fontSize: 18, fontWeight: '800', color: COLORS.text },
+  modalClose: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: COLORS.background,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalCloseText: { fontSize: 20, fontWeight: '700', color: COLORS.textMuted },
+  modalSub: { fontSize: 12, color: COLORS.textMuted, marginBottom: 14, lineHeight: 18 },
+  modalLabel: { fontSize: 12, fontWeight: '600', color: COLORS.text, marginBottom: 6 },
+  modalInput: {
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    fontSize: 14,
+    color: COLORS.text,
+    backgroundColor: COLORS.background,
+    marginBottom: 12,
+  },
+  modalRow: { flexDirection: 'row', gap: 10 },
+  modalHalf: { flex: 1 },
+  modalErrorBox: {
+    backgroundColor: COLORS.dangerLight,
+    borderRadius: 8,
+    padding: 10,
+    marginBottom: 12,
+  },
+  modalErrorText: { color: COLORS.danger, fontSize: 12, fontWeight: '600' },
+  modalPrimaryBtn: {
+    backgroundColor: COLORS.primary,
+    borderRadius: 10,
+    paddingVertical: 12,
+    alignItems: 'center',
+  },
+  modalPrimaryBtnDisabled: { opacity: 0.6 },
+  modalPrimaryBtnText: { color: '#fff', fontSize: 14, fontWeight: '700' },
 
   tuckshopRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 6 },
   tuckshopInputWrap: {

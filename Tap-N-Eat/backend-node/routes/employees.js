@@ -48,7 +48,7 @@ async function ensureEmployeesTable(conn) {
   await conn.query(`CREATE TABLE IF NOT EXISTS employees (
     id INT AUTO_INCREMENT PRIMARY KEY,
     school_id INT NULL,
-    rfid_number VARCHAR(64) NOT NULL UNIQUE,
+    rfid_number VARCHAR(64) NULL UNIQUE,
     emp_id VARCHAR(64) NULL UNIQUE,
     emp_name VARCHAR(120) NOT NULL,
     parent_email VARCHAR(191) NULL,
@@ -63,8 +63,16 @@ async function ensureEmployeesTable(conn) {
   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci`);
 }
 
+async function ensureRfidNullable(conn) {
+  const [rows] = await conn.query("SHOW COLUMNS FROM employees LIKE 'rfid_number'");
+  if (rows.length > 0 && rows[0].Null === 'NO') {
+    await conn.query("ALTER TABLE employees MODIFY COLUMN rfid_number VARCHAR(64) NULL");
+  }
+}
+
 async function ensureSchoolIdOnEmployees(conn) {
   await ensureEmployeesTable(conn);
+  await ensureRfidNullable(conn);
   const [rows] = await conn.query("SHOW COLUMNS FROM employees LIKE 'school_id'");
   if (rows.length === 0) {
     await conn.query("ALTER TABLE employees ADD COLUMN school_id INT NULL AFTER id");

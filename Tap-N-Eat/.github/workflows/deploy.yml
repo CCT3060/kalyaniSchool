@@ -19,13 +19,23 @@ jobs:
           command_timeout: 300s
           script: |
             set -e
+            RAZORPAY_KEY_ID="${{ secrets.RAZORPAY_KEY_ID }}"
+            RAZORPAY_KEY_SECRET="${{ secrets.RAZORPAY_KEY_SECRET }}"
             cd /home/ec2-user/tapneat_src
             git pull origin main
             rsync -a --delete --exclude=node_modules --exclude=.env --exclude=uploads \
               /home/ec2-user/tapneat_src/backend-node/ \
               /home/ec2-user/tapneat/
+            if [ -n "$RAZORPAY_KEY_ID" ] && [ -n "$RAZORPAY_KEY_SECRET" ]; then
+              grep -q '^RAZORPAY_KEY_ID=' /home/ec2-user/tapneat/.env && \
+                sed -i "s|^RAZORPAY_KEY_ID=.*|RAZORPAY_KEY_ID=$RAZORPAY_KEY_ID|" /home/ec2-user/tapneat/.env || \
+                echo "RAZORPAY_KEY_ID=$RAZORPAY_KEY_ID" >> /home/ec2-user/tapneat/.env
+              grep -q '^RAZORPAY_KEY_SECRET=' /home/ec2-user/tapneat/.env && \
+                sed -i "s|^RAZORPAY_KEY_SECRET=.*|RAZORPAY_KEY_SECRET=$RAZORPAY_KEY_SECRET|" /home/ec2-user/tapneat/.env || \
+                echo "RAZORPAY_KEY_SECRET=$RAZORPAY_KEY_SECRET" >> /home/ec2-user/tapneat/.env
+            fi
             cd /home/ec2-user/tapneat && npm install --omit=dev --silent
-            cd /home/ec2-user/tapneat_src && npm run build
+            cd /home/ec2-user/tapneat_src && VITE_RAZORPAY_KEY_ID="$RAZORPAY_KEY_ID" npm run build
             sudo rsync -a --delete \
               /home/ec2-user/tapneat_src/dist/ \
               /var/www/tapneat/
