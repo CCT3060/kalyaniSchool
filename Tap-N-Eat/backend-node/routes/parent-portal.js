@@ -235,6 +235,47 @@ router.get('/', async (req, res) => {
   const action = req.query.action || '';
   const conn = await pool.getConnection();
   try {
+    if (action === 'parents' || action === 'parents-list' || action === 'parent-list') {
+      const schoolId = req.query.school_id && !isNaN(req.query.school_id) ? parseInt(req.query.school_id) : null;
+      let sql = `SELECT p.id, p.full_name, p.email, p.phone, p.is_active, p.created_at,
+                        COUNT(e.id) AS children_count
+                 FROM parents p
+                 LEFT JOIN employees e
+                   ON LOWER(TRIM(e.parent_email)) = LOWER(TRIM(p.email))`;
+      const params = [];
+      const where = ['p.is_active = 1'];
+      if (schoolId) {
+        where.push('e.school_id = ?');
+        params.push(schoolId);
+      }
+      if (where.length > 0) sql += ` WHERE ${where.join(' AND ')}`;
+      sql += ' GROUP BY p.id ORDER BY p.created_at DESC';
+      const [rows] = await conn.query(sql, params);
+      return res.json({ parents: rows });
+    }
+
+    if (action === 'children' || action === 'children-list') {
+      const parentId = req.query.parent_id && !isNaN(req.query.parent_id) ? parseInt(req.query.parent_id) : null;
+      let email = (req.query.email || '').trim().toLowerCase();
+      if (!email && parentId) {
+        const [rows] = await conn.query(
+          'SELECT id, full_name, email, phone, is_active FROM parents WHERE id=? LIMIT 1',
+          [parentId]
+        );
+        const parent = rows[0];
+        if (!parent || parseInt(parent.is_active) !== 1) return res.status(404).json({ error: 'Parent not found' });
+        email = parent.email;
+      }
+      if (!email) return res.status(400).json({ error: 'email or parent_id is required' });
+      const [rows] = await conn.query(
+        'SELECT id, full_name, email, phone, is_active FROM parents WHERE email=? LIMIT 1',
+        [email]
+      );
+      const parent = rows[0];
+      if (!parent || parseInt(parent.is_active) !== 1) return res.status(404).json({ error: 'Parent not found' });
+      return res.json(await parentResponse(conn, parent));
+    }
+
     if (action === 'profile') {
       const email = (req.query.email || '').trim().toLowerCase();
       if (!email) return res.status(400).json({ error: 'email is required' });
