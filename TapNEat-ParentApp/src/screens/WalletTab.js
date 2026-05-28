@@ -46,7 +46,7 @@ export default function WalletTab({ parentEmail }) {
   const [regDivision, setRegDivision] = useState('');
   const [regError, setRegError] = useState('');
   const [regLoading, setRegLoading] = useState(false);
-  const [schoolId, setSchoolId] = useState('');
+  const [schoolCode, setSchoolCode] = useState('');
 
   const showAlert = (text, type = 'success') => {
     setAlertMsg({ type, text });
@@ -58,12 +58,13 @@ export default function WalletTab({ parentEmail }) {
     setRegStudentId('');
     setRegGrade('');
     setRegDivision('');
+    setSchoolCode('');
     setRegError('');
   };
 
   const handleRegisterChild = async () => {
-    if (!regName.trim() || !regStudentId.trim() || !regGrade.trim() || !regDivision.trim()) {
-      setRegError('Please fill all required fields.');
+    if (!schoolCode.trim() || !regName.trim() || !regStudentId.trim() || !regGrade.trim() || !regDivision.trim()) {
+      setRegError('Please fill all required fields including School Code.');
       return;
     }
     if (!parentEmail) {
@@ -83,7 +84,7 @@ export default function WalletTab({ parentEmail }) {
         student_id: regStudentId.trim(),
         grade: regGrade.trim(),
         division: regDivision.trim(),
-        school_id: schoolId || undefined,
+        school_code: schoolCode.trim() || undefined,
       }),
     });
 
@@ -239,7 +240,7 @@ export default function WalletTab({ parentEmail }) {
   }, [parentEmail]);
 
   useEffect(() => {
-    getItem('parentSchoolId').then((v) => setSchoolId(v || ''));
+    getItem('parentSchoolCode').then((v) => setSchoolCode(v || ''));
   }, []);
 
   useEffect(() => {
@@ -533,6 +534,16 @@ export default function WalletTab({ parentEmail }) {
           <Text style={styles.modalSub}>
             Enter your child's school details. RFID will be assigned by the school admin.
           </Text>
+
+          <Text style={styles.modalLabel}>School Code *</Text>
+          <TextInput
+            style={styles.modalInput}
+            value={schoolCode}
+            onChangeText={setSchoolCode}
+            placeholder="e.g. KA-01"
+            placeholderTextColor={COLORS.textMuted}
+            autoCapitalize="characters"
+          />
 
           <Text style={styles.modalLabel}>Student Full Name *</Text>
           <TextInput

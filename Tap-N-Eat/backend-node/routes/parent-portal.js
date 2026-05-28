@@ -130,7 +130,7 @@ router.post('/', async (req, res) => {
     }
 
     if (action === 'register-child') {
-      const { email, student_name, student_id, grade, division, school_id } = req.body || {};
+      const { email, student_name, student_id, grade, division, school_id, school_code } = req.body || {};
       if (!email || !student_name || !grade || !division) {
         return res.status(400).json({ error: 'email, student_name, grade and division are required' });
       }
@@ -154,7 +154,17 @@ router.post('/', async (req, res) => {
       const safeName = String(student_name).trim();
       const safeGrade = String(grade).trim();
       const safeDivision = String(division).trim();
-      const schoolId = !isNaN(parseInt(school_id)) ? parseInt(school_id) : null;
+      let schoolId = !isNaN(parseInt(school_id)) ? parseInt(school_id) : null;
+      if (!schoolId && school_code) {
+        const [schoolRows] = await conn.query(
+          'SELECT id FROM schools WHERE UPPER(TRIM(school_code)) = UPPER(TRIM(?)) AND is_active = 1 LIMIT 1',
+          [String(school_code).trim()]
+        );
+        if (schoolRows.length === 0) {
+          return res.status(400).json({ error: 'School not found. Please check the school code.' });
+        }
+        schoolId = schoolRows[0].id;
+      }
 
       const [result] = await conn.query(
         `INSERT INTO employees (school_id, rfid_number, emp_id, emp_name, parent_email, site_name, shift, grade, division, wallet_amount)
