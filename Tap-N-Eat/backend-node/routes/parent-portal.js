@@ -101,7 +101,7 @@ router.post('/', async (req, res) => {
     }
 
     if (action === 'login') {
-      const { email, password } = req.body;
+      const { email, password, school_id } = req.body;
       if (!email || !password) return res.status(400).json({ error: 'email and password are required' });
 
       const [rows] = await conn.query(
@@ -111,6 +111,20 @@ router.post('/', async (req, res) => {
       const parent = rows[0];
       if (!parent || parseInt(parent.is_active) !== 1) return res.status(401).json({ error: 'Invalid email or password' });
       if (!parent.password_hash || !(await bcrypt.compare(password, parent.password_hash))) return res.status(401).json({ error: 'Invalid email or password' });
+
+      if (school_id && !isNaN(parseInt(school_id))) {
+        await ensureEmployeesTable(conn);
+        await ensureStudentColumns(conn);
+        const [links] = await conn.query(
+          `SELECT id FROM employees
+           WHERE LOWER(TRIM(parent_email)) = LOWER(TRIM(?)) AND school_id = ?
+           LIMIT 1`,
+          [email.trim().toLowerCase(), parseInt(school_id)]
+        );
+        if (links.length === 0) {
+          return res.status(403).json({ error: 'Parent not linked to this school' });
+        }
+      }
 
       return res.json({ message: 'Login successful', data: await parentResponse(conn, parent) });
     }

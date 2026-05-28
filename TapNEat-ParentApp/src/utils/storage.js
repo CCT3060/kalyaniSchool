@@ -21,26 +21,32 @@ export async function removeItem(key) {
 }
 
 export async function getParentAuth() {
-  const [email, name, schoolLogoUrl, schoolName] = await Promise.all([
+  const [email, name, schoolLogoUrl, schoolName, schoolId, schoolCode] = await Promise.all([
     getItem('parentEmail'),
     getItem('parentName'),
     getItem('parentSchoolLogoUrl'),
     getItem('parentSchoolName'),
+    getItem('parentSchoolId'),
+    getItem('parentSchoolCode'),
   ]);
   return {
     email: email || '',
     name: name || 'Parent',
     schoolLogoUrl: schoolLogoUrl || '',
     schoolName: schoolName || '',
+    schoolId: schoolId || '',
+    schoolCode: schoolCode || '',
   };
 }
 
-export async function setParentAuth(email, name, schoolLogoUrl = '', schoolName = '') {
+export async function setParentAuth(email, name, schoolLogoUrl = '', schoolName = '', schoolId = '', schoolCode = '') {
   await Promise.all([
     setItem('parentEmail', email),
     setItem('parentName', name),
     setItem('parentSchoolLogoUrl', schoolLogoUrl || ''),
     setItem('parentSchoolName', schoolName || ''),
+    schoolId ? setItem('parentSchoolId', schoolId) : Promise.resolve(),
+    schoolCode ? setItem('parentSchoolCode', schoolCode) : Promise.resolve(),
   ]);
 }
 
@@ -50,5 +56,7 @@ export async function clearParentAuth() {
     removeItem('parentName'),
     removeItem('parentSchoolLogoUrl'),
     removeItem('parentSchoolName'),
+    removeItem('parentSchoolId'),
+    removeItem('parentSchoolCode'),
   ]);
 }

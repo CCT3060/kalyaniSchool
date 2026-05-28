@@ -5,7 +5,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { api } from '../utils/api';
-import { getItem } from '../utils/storage';
+import { getItem, setItem } from '../utils/storage';
 import { COLORS } from '../constants';
 
 export default function SchoolCodeScreen({ navigation }) {
@@ -35,8 +35,15 @@ export default function SchoolCodeScreen({ navigation }) {
       setLoading(false);
       return;
     }
+    const school = data.school || {};
+    await Promise.all([
+      setItem('parentSchoolCode', trimmed),
+      setItem('parentSchoolId', school.id || ''),
+      setItem('parentSchoolName', school.name || ''),
+      setItem('parentSchoolLogoUrl', school.logo_url || ''),
+    ]);
     // Navigate to Login with school info so both login & signup know the school context
-    navigation.replace('Login', { schoolInfo: data.school });
+    navigation.replace('Login', { schoolInfo: school });
   };
 
   if (checking) {

@@ -35,7 +35,7 @@ export default function DashboardScreen({ navigation }) {
   useEffect(() => {
     getParentAuth().then(({ email, name, schoolLogoUrl: logo, schoolName: sname }) => {
       if (!email) {
-        navigation.replace('Login');
+        navigation.replace('SchoolCode');
         return;
       }
       setParentEmail(email);
@@ -53,7 +53,7 @@ export default function DashboardScreen({ navigation }) {
         style: 'destructive',
         onPress: async () => {
           await clearParentAuth();
-          navigation.replace('Login');
+          navigation.replace('SchoolCode');
         },
       },
     ]);

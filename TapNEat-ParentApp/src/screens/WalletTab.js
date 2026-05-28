@@ -13,12 +13,14 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { api } from '../utils/api';
+import { getItem } from '../utils/storage';
 import { COLORS, RAZORPAY_KEY, CONVENIENCE_RATE } from '../constants';
 import RazorpayWebView from '../components/RazorpayWebView';
 
 export default function WalletTab({ parentEmail }) {
   const [profile, setProfile] = useState(null);
   const [children, setChildren] = useState([]);
+  const [schoolName, setSchoolName] = useState('');
   const [selectedChildId, setSelectedChildId] = useState(null);
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -44,6 +46,7 @@ export default function WalletTab({ parentEmail }) {
   const [regDivision, setRegDivision] = useState('');
   const [regError, setRegError] = useState('');
   const [regLoading, setRegLoading] = useState(false);
+  const [schoolId, setSchoolId] = useState('');
 
   const showAlert = (text, type = 'success') => {
     setAlertMsg({ type, text });
@@ -80,6 +83,7 @@ export default function WalletTab({ parentEmail }) {
         student_id: regStudentId.trim(),
         grade: regGrade.trim(),
         division: regDivision.trim(),
+        school_id: schoolId || undefined,
       }),
     });
 
@@ -119,6 +123,7 @@ export default function WalletTab({ parentEmail }) {
     if (ok && data.children) {
       setProfile(data.parent || {});
       setChildren(data.children || []);
+      setSchoolName(data.school?.name || '');
       if (data.children.length > 0 && !selectedChildId) {
         setSelectedChildId(data.children[0].id);
       }
@@ -234,6 +239,10 @@ export default function WalletTab({ parentEmail }) {
   }, [parentEmail]);
 
   useEffect(() => {
+    getItem('parentSchoolId').then((v) => setSchoolId(v || ''));
+  }, []);
+
+  useEffect(() => {
     if (selectedChildId) loadTransactions(selectedChildId);
   }, [selectedChildId]);
 
@@ -290,6 +299,9 @@ export default function WalletTab({ parentEmail }) {
         <View style={styles.chip}>
           <Text style={styles.chipText}>Wallet</Text>
         </View>
+        {!!schoolName && (
+          <Text style={styles.schoolName}>School: {schoolName}</Text>
+        )}
         <Text style={styles.heroTitle}>Track and recharge your child wallet</Text>
         <Text style={styles.heroSub}>
           See current balances, linked school details, and recent meal transactions.
@@ -642,6 +654,7 @@ const styles = StyleSheet.create({
   },
   chipText: { color: '#fff', fontSize: 12, fontWeight: '700' },
   heroTitle: { fontSize: 20, fontWeight: '800', color: COLORS.text, marginBottom: 6 },
+  schoolName: { fontSize: 12, color: COLORS.textMuted, marginBottom: 4, fontWeight: '600' },
   heroSub: { fontSize: 13, color: COLORS.textMuted, lineHeight: 18 },
   summaryCard: {
     backgroundColor: COLORS.background,

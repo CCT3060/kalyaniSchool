@@ -10,13 +10,20 @@ import { COLORS } from '../constants';
 
 const PRIVACY_POLICY_URL = 'https://tapneat.cctindia.in/privacy-policy.html';
 
-export default function LoginScreen({ navigation }) {
+export default function LoginScreen({ navigation, route }) {
   const [mode, setMode] = useState('login'); // 'login' | 'signup'
   const [schoolName, setSchoolName] = useState('');
+  const [schoolId, setSchoolId] = useState('');
 
   useEffect(() => {
-    getItem('parentSchoolName').then((v) => setSchoolName(v || ''));
-  }, []);
+    const info = route?.params?.schoolInfo || null;
+    if (info) {
+      setSchoolName(info.name || '');
+      setSchoolId(info.id ? String(info.id) : '');
+    }
+    getItem('parentSchoolName').then((v) => setSchoolName((prev) => prev || v || ''));
+    getItem('parentSchoolId').then((v) => setSchoolId((prev) => prev || v || ''));
+  }, [route?.params]);
 
   // Login state
   const [email, setEmail] = useState('');
@@ -38,12 +45,12 @@ export default function LoginScreen({ navigation }) {
     setLoading(true); setError('');
     const { ok, data } = await api('parent-portal?action=login', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: email.trim(), password }),
+      body: JSON.stringify({ email: email.trim(), password, school_id: schoolId || undefined }),
     });
     if (!ok) { setError(data.error || 'Login failed'); setLoading(false); return; }
     const logoUrl  = (data.data.school && data.data.school.logo_url) || '';
     const sName    = (data.data.school && data.data.school.name) || '';
-    await setParentAuth(data.data.parent.email, data.data.parent.full_name, logoUrl, sName);
+    await setParentAuth(data.data.parent.email, data.data.parent.full_name, logoUrl, sName, schoolId);
     setLoading(false);
     navigation.replace('Dashboard');
   };
@@ -55,12 +62,12 @@ export default function LoginScreen({ navigation }) {
     setSuLoading(true); setSuError('');
     const { ok, data } = await api('parent-portal?action=signup', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ full_name: suName.trim(), email: suEmail.trim(), phone: suPhone.trim(), password: suPassword }),
+      body: JSON.stringify({ full_name: suName.trim(), email: suEmail.trim(), phone: suPhone.trim(), password: suPassword, school_id: schoolId || undefined }),
     });
     if (!ok) { setSuError(data.error || 'Signup failed'); setSuLoading(false); return; }
     const logoUrl = (data.data.school && data.data.school.logo_url) || '';
     const sName   = (data.data.school && data.data.school.name) || '';
-    await setParentAuth(data.data.parent.email, data.data.parent.full_name, logoUrl, sName);
+    await setParentAuth(data.data.parent.email, data.data.parent.full_name, logoUrl, sName, schoolId);
     setSuLoading(false);
     navigation.replace('Dashboard');
   };
