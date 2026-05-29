@@ -1,6 +1,7 @@
 const express = require('express');
 const router  = express.Router();
 const pool    = require('../config/database');
+const { sendNotificationToParentByStudentId } = require('../utils/pushNotification');
 
 function pickVal(obj, keys, def = null) {
   if (!obj) return def;
@@ -281,6 +282,15 @@ router.post('/', async (req, res) => {
     );
 
     await conn.commit();
+
+    // Send push notification to the student's parent — fire and forget
+    sendNotificationToParentByStudentId(
+      employeeId,
+      'RFID Scan Alert',
+      'Your child has used RFID for a meal.',
+      { type: 'RFID_SCAN', screen: 'CanteenHistory', scanType: 'MEAL' }
+    ).catch(() => {});
+
     res.json({
       status: 'success',
       message: 'Canteen access granted',

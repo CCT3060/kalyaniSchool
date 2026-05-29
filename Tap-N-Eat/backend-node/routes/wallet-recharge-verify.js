@@ -2,6 +2,7 @@ const express = require('express');
 const router  = express.Router();
 const crypto  = require('crypto');
 const pool    = require('../config/database');
+const { sendNotificationToParentByEmail } = require('../utils/pushNotification');
 
 async function ensureWalletRechargePaymentsTable(conn) {
   await conn.query(`CREATE TABLE IF NOT EXISTS wallet_recharge_payments (
@@ -128,6 +129,15 @@ router.post('/', async (req, res) => {
       );
 
       await conn.commit();
+
+      // Send push notification to parent — fire and forget (do not await)
+      sendNotificationToParentByEmail(
+        email,
+        'Transaction Completed',
+        'Your transaction is completed successfully.',
+        { type: 'PAYMENT_SUCCESS', screen: 'PaymentHistory' }
+      ).catch(() => {});
+
       return res.json({
         verified: true,
         message: 'TuckShop wallet topped up successfully',
@@ -183,6 +193,15 @@ router.post('/', async (req, res) => {
     );
 
     await conn.commit();
+
+    // Send push notification to parent — fire and forget (do not await)
+    sendNotificationToParentByEmail(
+      email,
+      'Transaction Completed',
+      'Your transaction is completed successfully.',
+      { type: 'PAYMENT_SUCCESS', screen: 'PaymentHistory' }
+    ).catch(() => {});
+
     res.json({
       verified: true,
       message: `Meal plan subscription activated for ${monthLabels.join(', ')}`,

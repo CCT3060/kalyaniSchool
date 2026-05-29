@@ -18,7 +18,7 @@
     },
     "android": {
       "package": "com.tapneat.parent",
-      "versionCode": 5,
+      "versionCode": 6,
       "usesCleartextTraffic": true,
       "softwareKeyboardLayoutMode": "resize",
       "adaptiveIcon": {
@@ -27,14 +27,36 @@
       },
       "permissions": [
         "android.permission.INTERNET",
-        "android.permission.ACCESS_NETWORK_STATE"
+        "android.permission.ACCESS_NETWORK_STATE",
+        "android.permission.RECEIVE_BOOT_COMPLETED",
+        "android.permission.VIBRATE",
+        "android.permission.SCHEDULE_EXACT_ALARM"
       ]
     },
+    "plugins": [
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/logo.png",
+          "color": "#10B981",
+          "androidMode": "default",
+          "androidCollapsedTitle": "Tap-N-Eat"
+        }
+      ],
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "usesCleartextTraffic": true
+          }
+        }
+      ]
+    ],
     "web": {},
-    "owner": "architkore",
+    "owner": "architkore-2",
     "extra": {
       "eas": {
-        "projectId": "b0571c37-0121-4ac5-8a8a-1cc7c9d400eb"
+        "projectId": "e541a4bf-7efe-4afb-9fa4-265e435e4bb5"
       }
     }
   }

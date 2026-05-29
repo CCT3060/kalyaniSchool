@@ -3465,7 +3465,7 @@ function AdminDashboard({
                     <thead>
                       <tr>
                         <th>Student Name</th>
-                        <th>Student ID</th>
+                        <th>Admission ID</th>
                         <th>Grade</th>
                         <th>Division</th>
                         <th>Meal Plan</th>
@@ -3561,7 +3561,7 @@ function AdminDashboard({
                               />
                             </div>
                             <div className="form-group">
-                              <label htmlFor="emp_id">Student ID <span className="req">*</span></label>
+                              <label htmlFor="emp_id">Admission ID <span className="req">*</span></label>
                               <input
                                 type="text"
                                 id="emp_id"
@@ -3713,7 +3713,7 @@ function AdminDashboard({
                             <thead>
                               <tr>
                                 <th>RFID Card ID</th>
-                                <th>Student ID</th>
+                                <th>Admission ID</th>
                                 <th>Name</th>
                                 <th>Parent Email</th>
                                 <th>Grade</th>
@@ -4427,7 +4427,7 @@ function AdminDashboard({
                   />
                 </div>
                 <div className="form-group">
-                  <label htmlFor="edit_emp_id">Student ID *</label>
+                  <label htmlFor="edit_emp_id">Admission ID *</label>
                   <input
                     type="text"
                     id="edit_emp_id"

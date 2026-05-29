@@ -131,20 +131,36 @@ export default function SubscriptionsTab({ parentEmail }) {
     return Object.values(map);
   })();
 
-  // Open multi-month selection modal when parent taps Subscribe (group-level)
+  // Open multi-month selection modal when parent taps Subscribe (group-level).
+  // Only shows months from the current month onward, up to 12 months ahead.
   const handleSubscribePlanGroup = (mealTypeId) => {
     if (!selectedChildId) { showAlert('Please select a child first'); return; }
-    const group = availablePlans.filter(
-      (p) =>
-        p.meal_type_id === mealTypeId &&
-        !subscriptions.some(
-          (s) =>
-            s.meal_type_id === p.meal_type_id &&
-            parseInt(s.month) === parseInt(p.month) &&
-            parseInt(s.year) === parseInt(p.year) &&
-            s.status === 'Active'
-        )
-    );
+
+    // Calculate the valid window: current month → 12 months from now
+    const now      = new Date();
+    const curMonth = now.getMonth() + 1; // 1-indexed
+    const curYear  = now.getFullYear();
+
+    const group = availablePlans.filter((p) => {
+      if (p.meal_type_id !== mealTypeId) return false;
+
+      // Exclude months the child is already subscribed to
+      const alreadySubscribed = subscriptions.some(
+        (s) =>
+          s.meal_type_id === p.meal_type_id &&
+          parseInt(s.month) === parseInt(p.month) &&
+          parseInt(s.year)  === parseInt(p.year)  &&
+          s.status === 'Active'
+      );
+      if (alreadySubscribed) return false;
+
+      // Only include months from the current month onward (up to 12 months ahead)
+      const planMonth = parseInt(p.month);
+      const planYear  = parseInt(p.year);
+      const monthsAhead = (planYear - curYear) * 12 + (planMonth - curMonth);
+      return monthsAhead >= 0 && monthsAhead < 12;
+    });
+
     if (group.length === 0) { showAlert('All months already subscribed for this plan', 'error'); return; }
     setModalPlanGroup(group);
     setModalSelectedIds(new Set());
@@ -448,6 +464,22 @@ export default function SubscriptionsTab({ parentEmail }) {
                 <Text style={styles.modalCloseText}>✕</Text>
               </TouchableOpacity>
             </View>
+
+            {/* Show which child this subscription is for */}
+            {selectedChild && (
+              <View style={styles.modalChildInfo}>
+                <View style={styles.modalChildAvatar}>
+                  <Text style={styles.modalChildAvatarText}>
+                    {(selectedChild.student_name || 'S').slice(0, 1).toUpperCase()}
+                  </Text>
+                </View>
+                <View>
+                  <Text style={styles.modalChildName}>{selectedChild.student_name}</Text>
+                  <Text style={styles.modalChildId}>Admission ID: {selectedChild.student_id || '—'}</Text>
+                </View>
+              </View>
+            )}
+
             <Text style={styles.modalSubtitle}>
               Select the months you want to subscribe ({modalPlanGroup.length} available)
             </Text>
@@ -579,164 +611,181 @@ export default function SubscriptionsTab({ parentEmail }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f1f5f9' },
-  contentContainer: { padding: 16, paddingBottom: 40 },
+  container: { flex: 1, backgroundColor: COLORS.background },
+  contentContainer: { padding: 20, paddingBottom: 40 },
   centered: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 40 },
-  loadingText: { marginTop: 12, color: COLORS.textMuted, fontSize: 15 },
-  alertBanner: { padding: 12, borderRadius: 10, marginBottom: 12 },
-  alertError: { backgroundColor: '#fee2e2' },
-  alertSuccess: { backgroundColor: '#d1fae5' },
-  alertText: { color: '#1e293b', fontWeight: '600', fontSize: 14 },
+  loadingText: { marginTop: 12, color: COLORS.textMuted, fontSize: 15, fontWeight: '500' },
+  alertBanner: { padding: 14, borderRadius: 12, marginBottom: 16 },
+  alertError: { backgroundColor: COLORS.dangerLight },
+  alertSuccess: { backgroundColor: COLORS.successLight },
+  alertText: { color: COLORS.text, fontWeight: '600', fontSize: 14 },
 
-  heroSection: { marginBottom: 20, paddingVertical: 16, paddingHorizontal: 4 },
-  chip: { backgroundColor: '#e0f2fe', alignSelf: 'flex-start', paddingHorizontal: 12, paddingVertical: 4, borderRadius: 20, marginBottom: 10 },
-  chipText: { color: '#0369a1', fontWeight: '700', fontSize: 12 },
-  heroTitle: { fontSize: 22, fontWeight: '800', color: '#1e293b', marginBottom: 6 },
-  heroSub: { fontSize: 14, color: COLORS.textMuted, lineHeight: 20 },
+  heroSection: { marginBottom: 24, paddingVertical: 12, paddingHorizontal: 4 },
+  chip: { backgroundColor: COLORS.primaryLight, alignSelf: 'flex-start', paddingHorizontal: 14, paddingVertical: 6, borderRadius: 20, marginBottom: 12 },
+  chipText: { color: COLORS.primaryDark, fontWeight: '800', fontSize: 12, textTransform: 'uppercase', letterSpacing: 0.5 },
+  heroTitle: { fontSize: 24, fontWeight: '800', color: COLORS.text, marginBottom: 6, letterSpacing: -0.3 },
+  heroSub: { fontSize: 15, color: COLORS.textMuted, lineHeight: 22 },
 
   card: {
-    backgroundColor: '#fff', borderRadius: 16, padding: 16,
-    marginBottom: 16, shadowColor: '#000', shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06, shadowRadius: 8, elevation: 2,
+    backgroundColor: COLORS.surface, borderRadius: 24, padding: 24,
+    marginBottom: 20, shadowColor: '#64748B', shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.06, shadowRadius: 24, elevation: 6,
   },
-  cardTitle: { fontSize: 16, fontWeight: '700', color: '#1e293b', marginBottom: 4 },
-  cardSub: { fontSize: 13, color: COLORS.textMuted, marginBottom: 14 },
+  cardTitle: { fontSize: 18, fontWeight: '800', color: COLORS.text, marginBottom: 4, letterSpacing: -0.2 },
+  cardSub: { fontSize: 14, color: COLORS.textMuted, marginBottom: 16 },
 
   childItem: {
-    padding: 12, borderRadius: 10, borderWidth: 1.5,
-    borderColor: '#e2e8f0', marginBottom: 8,
+    padding: 16, borderRadius: 14, borderWidth: 1.5,
+    borderColor: COLORS.border, marginBottom: 10,
+    backgroundColor: COLORS.surface,
   },
-  childItemActive: { borderColor: COLORS.primary, backgroundColor: '#f0fdf4' },
-  childName: { fontWeight: '700', fontSize: 14, color: '#1e293b' },
+  childItemActive: { borderColor: COLORS.primary, backgroundColor: COLORS.primaryLight },
+  childName: { fontWeight: '800', fontSize: 16, color: COLORS.text },
   childNameActive: { color: COLORS.primary },
-  childMeta: { fontSize: 12, color: COLORS.textMuted, marginTop: 2 },
+  childMeta: { fontSize: 13, color: COLORS.textMuted, marginTop: 4 },
 
-  emptyBox: { alignItems: 'center', padding: 20 },
-  emptyText: { color: COLORS.textMuted, fontSize: 14, textAlign: 'center', lineHeight: 20 },
+  emptyBox: { alignItems: 'center', padding: 32 },
+  emptyText: { color: COLORS.textMuted, fontSize: 15, textAlign: 'center', lineHeight: 22 },
 
   subRow: {
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start',
-    paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: '#f1f5f9',
+    paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: COLORS.border,
   },
   subLeft: { flex: 1, marginRight: 12 },
-  subPlan: { fontSize: 15, fontWeight: '700', color: '#1e293b', marginBottom: 2 },
-  subMeta: { fontSize: 13, color: COLORS.textMuted, marginBottom: 2 },
-  subDateLabel: { fontSize: 11, color: '#94a3b8' },
+  subPlan: { fontSize: 16, fontWeight: '800', color: COLORS.text, marginBottom: 4 },
+  subMeta: { fontSize: 14, color: COLORS.textMuted, marginBottom: 4 },
+  subDateLabel: { fontSize: 12, color: COLORS.textLight, fontWeight: '500' },
   subRight: { alignItems: 'flex-end' },
-  subAmount: { fontSize: 16, fontWeight: '800', color: '#16a34a', marginBottom: 6 },
+  subAmount: { fontSize: 18, fontWeight: '800', color: COLORS.success, marginBottom: 8 },
 
   logRow: {
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start',
-    paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: '#f1f5f9',
+    paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: COLORS.border,
   },
   logLeft: { flex: 1, marginRight: 12 },
-  logPlan: { fontSize: 14, fontWeight: '700', color: '#1e293b', marginBottom: 2 },
-  logMeta: { fontSize: 12, color: COLORS.textMuted },
-  logDenyReason: { fontSize: 11, color: '#dc2626', marginTop: 2 },
+  logPlan: { fontSize: 15, fontWeight: '800', color: COLORS.text, marginBottom: 4 },
+  logMeta: { fontSize: 13, color: COLORS.textMuted },
+  logDenyReason: { fontSize: 12, color: COLORS.danger, marginTop: 4, fontWeight: '500' },
 
-  statusPill: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 20 },
-  statusActive: { backgroundColor: '#d1fae5' },
-  statusInactive: { backgroundColor: '#fee2e2' },
-  statusText: { fontSize: 12, fontWeight: '700' },
-  statusActiveText: { color: '#065f46' },
-  statusInactiveText: { color: '#991b1b' },
+  statusPill: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20 },
+  statusActive: { backgroundColor: COLORS.successLight },
+  statusInactive: { backgroundColor: COLORS.dangerLight },
+  statusText: { fontSize: 12, fontWeight: '800', letterSpacing: 0.3 },
+  statusActiveText: { color: COLORS.success },
+  statusInactiveText: { color: COLORS.danger },
 
   planRow: {
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-    paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: '#f1f5f9',
+    paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: COLORS.border,
   },
   planLeft: { flex: 1, marginRight: 12 },
-  planName: { fontSize: 15, fontWeight: '700', color: '#1e293b', marginBottom: 2 },
-  planMeta: { fontSize: 12, color: COLORS.textMuted, marginBottom: 4 },
-  planPrice: { fontSize: 14, fontWeight: '700', color: '#6c5ce7' },
+  planName: { fontSize: 16, fontWeight: '800', color: COLORS.text, marginBottom: 4 },
+  planMeta: { fontSize: 13, color: COLORS.textMuted, marginBottom: 6 },
+  planPrice: { fontSize: 15, fontWeight: '800', color: COLORS.primary },
   subscribeBtn: {
-    backgroundColor: '#6c5ce7', paddingHorizontal: 14, paddingVertical: 10,
-    borderRadius: 12, shadowColor: '#6c5ce7', shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3, shadowRadius: 4, elevation: 3,
+    backgroundColor: COLORS.primary, paddingHorizontal: 16, paddingVertical: 12,
+    borderRadius: 12, shadowColor: COLORS.primary, shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2, shadowRadius: 8, elevation: 4,
   },
-  subscribeBtnDisabled: { backgroundColor: '#cbd5e1', shadowOpacity: 0 },
-  subscribeBtnText: { color: '#fff', fontWeight: '700', fontSize: 13 },
+  subscribeBtnDisabled: { backgroundColor: COLORS.textLight, shadowOpacity: 0, elevation: 0 },
+  subscribeBtnText: { color: '#ffffff', fontWeight: '800', fontSize: 14, textAlign: 'center' },
 
   // ── Multi-month modal ──────────────────────────────────
   quickSelectRow: {
-    flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 12,
+    flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 16,
   },
   quickSelectBtn: {
-    paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20,
-    backgroundColor: '#f1f5f9', borderWidth: 1, borderColor: '#e2e8f0',
+    paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20,
+    backgroundColor: '#F8FAFC', borderWidth: 1, borderColor: COLORS.border,
   },
   quickSelectBtnClear: {
-    borderColor: '#fecaca', backgroundColor: '#fff5f5',
+    borderColor: COLORS.dangerLight, backgroundColor: COLORS.dangerLight,
   },
   quickSelectBtnText: {
-    fontSize: 12, fontWeight: '700', color: '#475569',
+    fontSize: 13, fontWeight: '700', color: COLORS.textMuted,
   },
   modalOverlay: {
-    flex: 1, backgroundColor: 'rgba(15,23,42,0.7)',
+    flex: 1, backgroundColor: 'rgba(15, 23, 42, 0.6)',
     justifyContent: 'flex-end',
   },
   modalCard: {
-    backgroundColor: '#fff',
-    borderTopLeftRadius: 24, borderTopRightRadius: 24,
-    padding: 20, paddingBottom: 36,
-    shadowColor: '#000', shadowOffset: { width: 0, height: -4 },
-    shadowOpacity: 0.12, shadowRadius: 20, elevation: 20,
+    backgroundColor: COLORS.surface,
+    borderTopLeftRadius: 32, borderTopRightRadius: 32,
+    padding: 24, paddingBottom: 40,
+    shadowColor: '#000', shadowOffset: { width: 0, height: -8 },
+    shadowOpacity: 0.1, shadowRadius: 24, elevation: 20,
   },
   modalHeader: {
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-    marginBottom: 6,
+    marginBottom: 8,
   },
-  modalTitle: { fontSize: 18, fontWeight: '800', color: '#1e293b', flex: 1 },
+  modalTitle: { fontSize: 22, fontWeight: '800', color: COLORS.text, flex: 1, letterSpacing: -0.3 },
   modalClose: {
-    width: 32, height: 32, borderRadius: 16,
-    backgroundColor: '#f1f5f9', justifyContent: 'center', alignItems: 'center',
+    width: 36, height: 36, borderRadius: 18,
+    backgroundColor: '#F8FAFC', justifyContent: 'center', alignItems: 'center',
   },
-  modalCloseText: { fontSize: 14, color: '#64748b', fontWeight: '700' },
-  modalSubtitle: { fontSize: 13, color: COLORS.textMuted, marginBottom: 16 },
+  modalCloseText: { fontSize: 16, color: COLORS.textMuted, fontWeight: '700' },
+  modalSubtitle: { fontSize: 14, color: COLORS.textMuted, marginBottom: 20, lineHeight: 20 },
+
+  // Child info shown at the top of the month-selection modal
+  modalChildInfo: {
+    flexDirection: 'row', alignItems: 'center',
+    backgroundColor: COLORS.primaryLight, borderRadius: 14,
+    padding: 12, marginBottom: 16,
+  },
+  modalChildAvatar: {
+    width: 40, height: 40, borderRadius: 20,
+    backgroundColor: COLORS.primary, justifyContent: 'center', alignItems: 'center',
+    marginRight: 12,
+  },
+  modalChildAvatarText: { color: '#ffffff', fontWeight: '800', fontSize: 18 },
+  modalChildName: { fontSize: 15, fontWeight: '800', color: COLORS.text },
+  modalChildId: { fontSize: 13, color: COLORS.textMuted, marginTop: 2 },
 
   monthRow: {
     flexDirection: 'row', alignItems: 'center',
-    paddingVertical: 12, paddingHorizontal: 12,
-    borderRadius: 12, borderWidth: 1.5, borderColor: '#e2e8f0',
-    marginBottom: 8, backgroundColor: '#fafafa',
+    paddingVertical: 14, paddingHorizontal: 16,
+    borderRadius: 14, borderWidth: 1.5, borderColor: COLORS.border,
+    marginBottom: 10, backgroundColor: '#F8FAFC',
   },
-  monthRowSelected: { borderColor: '#6c5ce7', backgroundColor: '#f5f3ff' },
+  monthRowSelected: { borderColor: COLORS.primary, backgroundColor: COLORS.primaryLight },
   checkbox: {
-    width: 22, height: 22, borderRadius: 6,
-    borderWidth: 2, borderColor: '#cbd5e1',
-    marginRight: 12, justifyContent: 'center', alignItems: 'center',
+    width: 24, height: 24, borderRadius: 8,
+    borderWidth: 2, borderColor: COLORS.textLight,
+    marginRight: 14, justifyContent: 'center', alignItems: 'center',
   },
-  checkboxChecked: { borderColor: '#6c5ce7', backgroundColor: '#6c5ce7' },
-  checkmark: { color: '#fff', fontWeight: '900', fontSize: 13 },
-  monthName: { fontSize: 14, fontWeight: '700', color: '#1e293b' },
-  monthNameSelected: { color: '#6c5ce7' },
-  monthGrade: { fontSize: 11, color: COLORS.textMuted, marginTop: 1 },
-  monthPrice: { fontSize: 15, fontWeight: '700', color: '#1e293b' },
-  monthPriceSelected: { color: '#6c5ce7' },
+  checkboxChecked: { borderColor: COLORS.primary, backgroundColor: COLORS.primary },
+  checkmark: { color: '#ffffff', fontWeight: '900', fontSize: 14 },
+  monthName: { fontSize: 15, fontWeight: '800', color: COLORS.text },
+  monthNameSelected: { color: COLORS.primaryDark },
+  monthGrade: { fontSize: 12, color: COLORS.textMuted, marginTop: 2 },
+  monthPrice: { fontSize: 16, fontWeight: '800', color: COLORS.text },
+  monthPriceSelected: { color: COLORS.primaryDark },
 
   totalBox: {
-    backgroundColor: '#f8fafc', borderRadius: 12, padding: 14,
-    marginTop: 12, marginBottom: 4,
-    borderWidth: 1, borderColor: '#e2e8f0',
+    backgroundColor: '#F8FAFC', borderRadius: 14, padding: 16,
+    marginTop: 16, marginBottom: 8,
+    borderWidth: 1, borderColor: COLORS.border,
   },
-  totalRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 },
-  totalLabel: { fontSize: 13, color: COLORS.textMuted },
-  totalValue: { fontSize: 13, fontWeight: '600', color: '#1e293b' },
-  grandLabel: { fontSize: 14, fontWeight: '800', color: '#1e293b' },
-  grandValue: { fontSize: 18, fontWeight: '800', color: '#6c5ce7' },
+  totalRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 },
+  totalLabel: { fontSize: 14, color: COLORS.textMuted, fontWeight: '500' },
+  totalValue: { fontSize: 14, fontWeight: '700', color: COLORS.text },
+  grandLabel: { fontSize: 16, fontWeight: '800', color: COLORS.text },
+  grandValue: { fontSize: 20, fontWeight: '800', color: COLORS.primary },
 
-  modalBtns: { flexDirection: 'row', gap: 12, marginTop: 16 },
+  modalBtns: { flexDirection: 'row', gap: 12, marginTop: 20 },
   cancelBtn: {
-    flex: 1, paddingVertical: 14, borderRadius: 12,
-    backgroundColor: '#f1f5f9', alignItems: 'center',
+    flex: 1, paddingVertical: 16, borderRadius: 14,
+    backgroundColor: '#F8FAFC', alignItems: 'center',
+    borderWidth: 1, borderColor: COLORS.border,
   },
-  cancelBtnText: { fontWeight: '700', fontSize: 14, color: '#64748b' },
+  cancelBtnText: { fontWeight: '700', fontSize: 15, color: COLORS.textMuted },
   payBtn: {
-    flex: 2, paddingVertical: 14, borderRadius: 12,
-    backgroundColor: '#6c5ce7', alignItems: 'center',
-    shadowColor: '#6c5ce7', shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.35, shadowRadius: 6, elevation: 4,
+    flex: 2, paddingVertical: 16, borderRadius: 14,
+    backgroundColor: COLORS.primary, alignItems: 'center',
+    shadowColor: COLORS.primary, shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25, shadowRadius: 8, elevation: 4,
   },
-  payBtnDisabled: { backgroundColor: '#cbd5e1', shadowOpacity: 0 },
-  payBtnText: { color: '#fff', fontWeight: '800', fontSize: 15 },
+  payBtnDisabled: { backgroundColor: COLORS.textLight, shadowOpacity: 0, elevation: 0 },
+  payBtnText: { color: '#ffffff', fontWeight: '800', fontSize: 16 },
 });

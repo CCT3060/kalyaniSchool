@@ -203,7 +203,7 @@ router.post('/', async (req, res) => {
     await conn.rollback();
     if (err.code === 'ER_DUP_ENTRY') {
       const msg = err.message.includes('rfid_number') ? 'RFID Card ID already exists'
-                : err.message.includes('emp_id')      ? 'Student ID already exists'
+                : err.message.includes('emp_id')      ? 'Admission ID already exists'
                 : err.message.includes('email')       ? 'Parent email already exists with another account'
                 : 'Duplicate entry';
       return res.status(400).json({ message: msg });

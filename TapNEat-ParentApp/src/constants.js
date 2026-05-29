@@ -10,22 +10,24 @@ export const MONTH_NAMES = [
 ];
 
 export const COLORS = {
-  primary: '#00b894',
-  primaryDark: '#00916e',
-  accent: '#f59e0b',
-  accentDark: '#ea580c',
-  danger: '#e74c3c',
-  dangerLight: '#fdecea',
-  success: '#00b894',
-  successLight: '#e0f7f1',
-  warning: '#f59e0b',
-  warningLight: '#fef9ec',
-  text: '#1e293b',
-  textMuted: '#64748b',
-  textLight: '#94a3b8',
-  border: '#e2e8f0',
-  background: '#f8fafc',
-  cardBg: '#ffffff',
-  sidebar: '#0f172a',
-  sidebarText: '#cbd5e1',
+  primary: '#10B981',      // Soft Emerald
+  primaryDark: '#0D9488',  // Teal
+  primaryLight: '#D1FAE5', // Light Emerald for backgrounds
+  accent: '#34D399',       // Soft Green
+  accentDark: '#059669',
+  danger: '#EF4444',       // Soft Red
+  dangerLight: '#FEE2E2',
+  success: '#10B981',
+  successLight: '#D1FAE5',
+  warning: '#F59E0B',      // Soft Orange
+  warningLight: '#FEF3C7',
+  text: '#0F172A',         // Dark Slate
+  textMuted: '#475569',
+  textLight: '#94A3B8',
+  border: '#E2E8F0',       // Light Gray
+  background: '#F8FAFC',   // Clean Off-White
+  cardBg: '#FFFFFF',
+  sidebar: '#0F172A',
+  sidebarText: '#CBD5E1',
+  surface: '#FFFFFF',
 };

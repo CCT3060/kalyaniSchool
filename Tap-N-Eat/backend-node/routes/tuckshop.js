@@ -1,6 +1,7 @@
 const express = require('express');
 const router  = express.Router();
 const pool    = require('../config/database');
+const { sendNotificationToParentByStudentId } = require('../utils/pushNotification');
 
 async function ensureTuckshopTables(conn) {
   await conn.query(`CREATE TABLE IF NOT EXISTS tuckshop_items (
@@ -129,6 +130,15 @@ router.post('/', async (req, res) => {
       }
 
       await conn.commit();
+
+      // Send push notification to the student's parent — fire and forget
+      sendNotificationToParentByStudentId(
+        emp.id,
+        'RFID Scan Alert',
+        'Your child has used RFID at the tuckshop.',
+        { type: 'RFID_SCAN', screen: 'CanteenHistory', scanType: 'TUCKSHOP' }
+      ).catch(() => {});
+
       return res.json({
         status: 'success', message: 'Purchase processed',
         transaction: { id: txId, total, previous_balance: prevBalance, new_balance: newBalance },

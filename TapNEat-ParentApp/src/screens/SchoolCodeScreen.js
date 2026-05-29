@@ -48,8 +48,8 @@ export default function SchoolCodeScreen({ navigation }) {
 
   if (checking) {
     return (
-      <SafeAreaView style={{ flex: 1, backgroundColor: '#fffaf2', alignItems: 'center', justifyContent: 'center' }}>
-        <ActivityIndicator color={COLORS.accent} size="large" />
+      <SafeAreaView style={{ flex: 1, backgroundColor: COLORS.background, alignItems: 'center', justifyContent: 'center' }}>
+        <ActivityIndicator color={COLORS.primary} size="large" />
       </SafeAreaView>
     );
   }
@@ -119,39 +119,50 @@ export default function SchoolCodeScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: '#fffaf2' },
+  safeArea: { flex: 1, backgroundColor: COLORS.background },
   flex: { flex: 1 },
   container: { flexGrow: 1, justifyContent: 'center', padding: 24, paddingBottom: 40 },
-  headerSection: { alignItems: 'center', marginBottom: 32 },
-  logoImage: { width: 200, height: 80, marginBottom: 20 },
-  title: { fontSize: 26, fontWeight: '800', color: COLORS.text, textAlign: 'center', marginBottom: 10 },
-  subtitle: { fontSize: 13, color: COLORS.textMuted, textAlign: 'center', lineHeight: 19 },
+  headerSection: { alignItems: 'center', marginBottom: 36 },
+  logoImage: { width: 180, height: 70, marginBottom: 24 },
+  title: { fontSize: 28, fontWeight: '800', color: COLORS.text, textAlign: 'center', marginBottom: 12, letterSpacing: -0.5 },
+  subtitle: { fontSize: 15, color: COLORS.textMuted, textAlign: 'center', lineHeight: 22, paddingHorizontal: 16 },
   card: {
-    backgroundColor: '#fff',
-    borderRadius: 16,
-    padding: 24,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 12,
-    elevation: 3,
+    backgroundColor: COLORS.surface,
+    borderRadius: 24,
+    padding: 28,
+    shadowColor: '#64748B',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.08,
+    shadowRadius: 24,
+    elevation: 6,
   },
-  label: { fontSize: 13, fontWeight: '600', color: COLORS.text, marginBottom: 6 },
+  label: { fontSize: 14, fontWeight: '600', color: COLORS.text, marginBottom: 8 },
   input: {
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: COLORS.border,
-    borderRadius: 10,
-    paddingHorizontal: 14,
-    paddingVertical: Platform.OS === 'ios' ? 14 : 10,
-    fontSize: 15,
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: Platform.OS === 'ios' ? 16 : 12,
+    fontSize: 16,
     color: COLORS.text,
-    backgroundColor: COLORS.background,
+    backgroundColor: '#F8FAFC',
   },
-  errorBox: { backgroundColor: COLORS.dangerLight, borderRadius: 8, padding: 12, marginTop: 14 },
-  errorText: { color: COLORS.danger, fontSize: 13, fontWeight: '500' },
-  btn: { backgroundColor: COLORS.accent, borderRadius: 10, paddingVertical: 16, alignItems: 'center', marginTop: 20 },
-  btnDisabled: { opacity: 0.6 },
-  btnText: { color: '#fff', fontSize: 16, fontWeight: '700' },
-  footer: { alignItems: 'center', marginTop: 40 },
-  footerText: { textAlign: 'center', color: COLORS.textMuted, fontSize: 10, lineHeight: 15 },
+  errorBox: { backgroundColor: COLORS.dangerLight, borderRadius: 10, padding: 14, marginTop: 16 },
+  errorText: { color: COLORS.danger, fontSize: 14, fontWeight: '600' },
+  btn: { 
+    backgroundColor: COLORS.primary, 
+    borderRadius: 14, 
+    paddingVertical: 18, 
+    alignItems: 'center', 
+    marginTop: 24,
+    shadowColor: COLORS.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  btnDisabled: { opacity: 0.5, shadowOpacity: 0, elevation: 0 },
+  btnText: { color: '#ffffff', fontSize: 17, fontWeight: '700', letterSpacing: 0.5 },
+  footer: { alignItems: 'center', marginTop: 48 },
+  footerText: { textAlign: 'center', color: COLORS.textLight, fontSize: 12, lineHeight: 18, fontWeight: '500' },
 });

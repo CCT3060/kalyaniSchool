@@ -44,6 +44,7 @@ app.use('/api/wallet-recharge-verify', require('./routes/wallet-recharge-verify'
 app.use('/api/wallet-recharge',     require('./routes/wallet-recharge'));
 app.use('/api/permissions',         require('./routes/permissions'));
 app.use('/api/school-roles',        require('./routes/school-roles'));
+app.use('/api/push-tokens',         require('./routes/push-tokens'));
 
 // ── Health check ─────────────────────────────────────────
 app.get('/api/health', (_req, res) => res.json({ status: 'ok' }));
